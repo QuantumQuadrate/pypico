@@ -3,7 +3,7 @@ import time
 import logging
 
 import motorControl
-#from cmdparse import parsecmd
+from cmdparse import SCPIParser
 
 import pypico_settings
 
@@ -29,6 +29,7 @@ logger.addHandler(ch)
 
 # setup motor controller
 mc = MotorControl(pypico_settings, logger)
+p = SCPIParser(mc)
 
 # setup zmq
 context = zmq.Context()
@@ -40,7 +41,7 @@ while True:
     #  Wait for next request from client
     message = socket.recv()
     print "Received request: ", message
-    time.sleep(1)
-    return_msg = parsecmd(message)
+    #time.sleep(1)
+    return_msg = p.parsecmd(message)
     print(return_msg)
     socket.send(return_msg)

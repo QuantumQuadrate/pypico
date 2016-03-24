@@ -18,6 +18,9 @@ class MotorControl():
         # open connection to driver
         self.driver = NP8742_TCP(settings.host, settings.port, logger)
 
+        self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
+        self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
+
     def close(self):
         self.driver.gentle_close()
 
