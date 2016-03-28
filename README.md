@@ -2,6 +2,8 @@
 
 A library for controlling a newport picomotor controller with an external rotary encoder for closed loop operation.
 
+Written by: Matthew Ebert and Josh Cherek
+
 ## Dependencies
 
  * ZeroMQ (for ethernet communication)
