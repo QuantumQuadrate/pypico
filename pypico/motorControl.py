@@ -1,6 +1,7 @@
 import logging
 from np8742_tcp_comm import NP8742_TCP
 from util import pid_exists
+import time
 
 """ High-level motor controller class"""
 class MotorControl():
@@ -16,10 +17,12 @@ class MotorControl():
           self.state = 'NOT READY'
 
         # open connection to driver
-        self.driver = NP8742_TCP(settings.host, settings.port, logger)
+        self.driver = NP8742_TCP(settings.host, settings.port, settings.timeout, settings.softStart, logger)
 
         self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
         self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
+
+	self.positions = [0]*settings.motor_count
 
     def close(self):
         self.driver.gentle_close()
@@ -36,9 +39,9 @@ class MotorControl():
             self.state = 'READY'
 
         # wait until the daemon would have written the new value to the file
-        time.sleep(self.encoderd_settings.REFRESH_RATE)
+        time.sleep(self.settings.encoderd_refresh_rate)
         try:
-            pf = file(motor_angle_files[channel],'r')
+            pf = file(self.settings.motor_angle_files[channel],'r')
             pos = float(pf.read().strip())
             pf.close()
             self.positions[channel] = pos
@@ -53,7 +56,7 @@ class MotorControl():
     def unit2degrees(self, channel, numeric, unit):
         s = unit.upper()
         s = s.strip()
-        if unit == "DEG"
+        if unit == "DEG":
           return numeric
         elif unit == "STEP":
           return numeric * self.calibrations[channel]
@@ -63,7 +66,7 @@ class MotorControl():
     """ block execution until a certain command finishes execution.
         Typical use: 
             cmdID = self.driver.queueCommand([command])[1]
-            waitForCmd(cmdID)    
+            self.waitForCmd(cmdID)    
         """
     def waitForCmd(self, cmdID):
         last_cid = -1
@@ -71,8 +74,8 @@ class MotorControl():
         while not self.driver.cmdFinishedQ(cmdID):
             cid = self.driver.currentCmdID()
             if cid != last_cid:
-            #print "current cmd: {}, waiting for: {}".format(cid,cmdID)
-            last_cid = cid
+              self.logger.debug("current cmd: {}, waiting for: {}".format(cid,cmdID))
+              last_cid = cid
             time.sleep(0.1) # not having print statement seems to break the loop for some reason
 
     """ Put code here to be called after a new motor position is achieved
@@ -85,7 +88,7 @@ class MotorControl():
     #===========================================================================
     """ Move motor to the position in degrees relative to the current position"""
     def move_rel(self, channel, degrees):
-        abs_deg = getPosition() + degrees
+        abs_deg = self.getPosition() + degrees
         return self.move_abs(channel, abs_deg)
 
     """ Move motor to the position in [units] relative to the current position.
@@ -93,9 +96,10 @@ class MotorControl():
     def move_rel_steps(self, channel, steps):
         # check channel range
         if channel < self.settings.motor_count:
-            if state == 'READY':
-                cmdID = self.driver.queueCommand("{}PR{}".format(channel,steps))[1]
-                waitForCmd(cmdID)
+            if self.state == 'READY':
+		motor = channel + 1 # motors start at 1 on controller
+                cmdID = self.driver.queueCommand("{}PR{}".format(motor,steps))[1]
+                self.waitForCmd(cmdID)
                 return 0
             else:
                 return -1
@@ -111,36 +115,47 @@ class MotorControl():
         # typical is 0.8-0.9
         zf = self.settings.zeno_factor[channel] 
         # get approximate steps
-        position = getPosition(channel)
-        avg_steps = self.settings.steps_per_degree[channel]*(degrees - position))
+        position = self.getPosition(channel)
+        avg_steps = self.settings.steps_per_degree[channel]*(position - degrees)
         # we should arrive with positive stepping 
         # turning the screw forward to minimize hysteresis
         if avg_steps < 0:
-            ret = move_rel_steps(channel, avg_steps - self.settings.overshoot[channel])
+	    steps = int(round(avg_steps - self.settings.overshoot[channel]))
+            status_msg = "Need to go negative. Current position {}DEG. Setpoint {}DEG. Steps to be taken: {}"
+            self.logger.info(status_msg.format(position, degrees, steps))
+	    try:
+                ret = self.move_rel_steps(channel, steps)
+	    except IndexError:
+		print "motor is registered"
+
             if ret < 0: # if encoderd is not running dont allow motor movement
                 return ret
 
         # now move forward
+        msg = ''
+        position = self.getPosition(channel)
         for i in range(self.settings.max_iterations):
-            steps = zf*self.settings.steps_per_degree[channel]*(degrees - position)
+            steps = zf*self.settings.steps_per_degree[channel]*( position - degrees )
             steps = int(round(steps))
-            ret = move_rel_steps(channel, steps)
+            status_msg = "Current position {}DEG. Setpoint {}DEG. Steps to be taken: {}"
+            self.logger.debug(status_msg.format(position, degrees, steps))
+            ret = self.move_rel_steps(channel, steps)
             if ret < 0:
                 return ret
-            position = getPosition(channel)
-            if( degrees - position  < 0 ):
+            position = self.getPosition(channel)
+            if( degrees > position ):
                 msg = "Current position {} deg. Setpoint exceeded by {} deg"
                 break
-            if( degrees - position == 0 ):
+            if( degrees == position ):
                 msg = "New motor position is {} deg, error {} deg."
                 break
         
         if( abs(position-degrees)<=self.settings.max_angle_errors[channel] ):
-            if not msg:
+            if msg=='':
                 msg = "Current position {} deg. Setpoint not achieved by {} deg after max iterations."
-            self.logger.error(msg.format(position, position-degrees))
-        else
             self.logger.info(msg.format(position, position-degrees))
+        else:
+            self.logger.error(msg.format(position, position-degrees))
 
         self.newPositionEvent(channel, position)
         return 0

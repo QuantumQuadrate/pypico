@@ -7,6 +7,9 @@ port = 23 # telnet port (do not change)
 
 motor_count = 2 # number of motors
 max_iterations = 20 # attempts to hit setpoint
+timeout = 1 # asynchat timeout
+softStart = False # softStart will not check the type of motor attached to the controller
+# checking the type of motor will move it a little bit. If that is not acceptable then set to True
 
 # motor calibrations: 2016/03/19
 steps_per_degree = [44.5,36.6]
@@ -21,16 +24,19 @@ max_angle_errors = [0.1,0.1]
 
 ## ENCODERD file locations
 encoderd_settings_path = '/home/pi/encoderd/'
-encoderd_settings = os.path.join([encoderd_settings_path,'encoderd_settings.py'])
+encoderd_settings_file = 'encoderd_settings'
+print encoderd_settings_file
 
-imp.load_source('encoderd_settings', encoderd_settings)
+f, filename, desc = imp.find_module(encoderd_settings_file, [encoderd_settings_path])
+encoderd_settings = imp.load_module(encoderd_settings_file, f, filename, desc)
+encoderd_refresh_rate = encoderd_settings.REFRESH_RATE
 
 encoderd_log_path = '/home/pi/.encoderd/'
-encoderd_pidfile = os.path.join([encoderd_log_path,'encoderd.pid'])
+encoderd_pidfile = os.path.join(encoderd_log_path,'encoderd.pid')
 
 # motor angle log files
-motor_angle_files = [ 'Angle_780X.log', 'Angle_780X.log' ]
-motor_angle_files = [ os.path.join([encoderd_log_path, f]) for f in motor_angle_files ]
+motor_angle_files = [ 'Angle_780X.log', 'Angle_780Y.log' ]
+motor_angle_files = [ os.path.join(encoderd_log_path, f) for f in motor_angle_files ]
 
 try:
   pf = file(encoderd_pidfile,'r')

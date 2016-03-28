@@ -1,8 +1,10 @@
 
 class SCPIParser():
   def __init__(self, motor_driver):
-    self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
+    self.errormsg = 'Command "{}" is not defined. \nSelect from [{}]'
     self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
+    self.errormsg_oor = 'Motor {} is not registered in pypico_settings file.'
+    self.errormsg_units = 'Unit {} is not recognized. \nSelect from [{}].'
     self.motor_driver = motor_driver
   
   def Error(self, string):
@@ -91,8 +93,10 @@ class SCPIParser():
   
   #Wrapper around motor driver library####################
   def read_mot(self, chan, args):
-    degrees = self.motor_driver.getPosition(chan)
-    #degrees = [273,12.23,-34,4000.23][chan]
+    try:
+      degrees = self.motor_driver.getPosition(chan)
+    except IndexError:
+      return self.Error(self.errormsg_oor.format(chan))
     return self.return_string(str(degrees))
   
   ################################################################################
@@ -126,7 +130,7 @@ class SCPIParser():
     return self.rel_mv(1,args)
   
   def rel_mv_2(self,args):
-    return self,rel_mv(2,args)
+    return self.rel_mv(2,args)
   
   def rel_mv_3(self,args):
     return self.rel_mv(3,args)
@@ -139,13 +143,18 @@ class SCPIParser():
     except ValueError:
       return self.Error(self.errormsg_numeric.format(args))
       
-    #degrees = [273,12.23,-34,4000.23][chan]
-    if unit.upper() == "STEP":
-        errno = self.motor_driver.move_rel_steps(chan,number)
-    elif (unit.upper() == "DEG") or (unit == ''):
-        errno = self.motor_driver.move_rel(chan,number)
-    else:
-        errno = -2
+    try:
+        if unit.upper() == "STEP":
+            self.motor_driver.move_rel_steps(chan,number)
+        elif (unit.upper() == "DEG") or (unit == ''):
+            self.motor_driver.move_rel(chan,number)
+        else:
+            raise ValueError
+    except IndexError:
+        return self.Error(self.errormsg_oor.format(chan))
+    except ValueError:
+        return self.Error(self.errormsg_units.format(unit.UPPER(), "DEG,STEP"))
+        
 
     return self.return_string(' '.join([str(number),unit]))
   
@@ -182,9 +191,14 @@ class SCPIParser():
     except ValueError:
       return self.Error(self.errormsg_numeric.format(args))
       
-    elif (unit.upper() == "DEG") or (unit == ''):
-        errno = self.motor_driver.move_abs(chan,number)
-    else:
-        errno = -2
-
+    try:
+        if (unit.upper() == "DEG") or (unit == ''):
+            self.motor_driver.move_abs(chan,number)
+        else:
+            raise ValueError
+    except IndexError:
+        return self.Error(self.errormsg_oor.format(chan))
+    except ValueError:
+        return self.Error(self.errormsg_units.format(unit.UPPER(), "DEG"))
+        
     return self.return_string(' '.join([str(number),unit]))

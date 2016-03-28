@@ -2,7 +2,7 @@ import zmq
 import time
 import logging
 
-import motorControl
+from motorControl import MotorControl
 from cmdparse import SCPIParser
 
 import pypico_settings
@@ -36,12 +36,17 @@ context = zmq.Context()
 socket = context.socket(zmq.REP)
 socket.bind("tcp://*:%s" % port)
 
+try:
+    while True:
+        #  Wait for next request from client
+        message = socket.recv()
+        print "Received request: ", message
+        #time.sleep(1)
+        return_msg = p.parsecmd(message)
+        print(return_msg)
+        socket.send(return_msg)
+except KeyboardInterrupt:
+    pass
 
-while True:
-    #  Wait for next request from client
-    message = socket.recv()
-    print "Received request: ", message
-    #time.sleep(1)
-    return_msg = p.parsecmd(message)
-    print(return_msg)
-    socket.send(return_msg)
+socket.close()
+context.destroy()
