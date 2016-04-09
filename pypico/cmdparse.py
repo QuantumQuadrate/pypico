@@ -2,7 +2,7 @@
 class SCPIParser():
   def __init__(self, motor_driver):
     self.errormsg = 'Command "{}" is not defined. \nSelect from [{}]'
-    self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
+    self.errormsg_numeric = 'Cound not parse numeric input: "{}"'
     self.errormsg_oor = 'Motor {} is not registered in pypico_settings file.'
     self.errormsg_units = 'Unit {} is not recognized. \nSelect from [{}].'
     self.motor_driver = motor_driver
@@ -153,7 +153,7 @@ class SCPIParser():
     except IndexError:
         return self.Error(self.errormsg_oor.format(chan))
     except ValueError:
-        return self.Error(self.errormsg_units.format(unit.UPPER(), "DEG,STEP"))
+        return self.Error(self.errormsg_units.format(unit.upper(), "DEG,STEP"))
         
 
     return self.return_string(' '.join([str(number),unit]))
@@ -199,6 +199,6 @@ class SCPIParser():
     except IndexError:
         return self.Error(self.errormsg_oor.format(chan))
     except ValueError:
-        return self.Error(self.errormsg_units.format(unit.UPPER(), "DEG"))
+        return self.Error(self.errormsg_units.format(unit.upper(), "DEG"))
         
     return self.return_string(' '.join([str(number),unit]))

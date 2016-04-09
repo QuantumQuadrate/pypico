@@ -137,6 +137,8 @@ class MotorControl():
         for i in range(self.settings.max_iterations):
             steps = zf*self.settings.steps_per_degree[channel]*( position - degrees )
             steps = int(round(steps))
+            if( steps == 0 ):
+                steps = 1
             status_msg = "Current position {}DEG. Setpoint {}DEG. Steps to be taken: {}"
             self.logger.debug(status_msg.format(position, degrees, steps))
             ret = self.move_rel_steps(channel, steps)
@@ -146,7 +148,7 @@ class MotorControl():
             if( degrees > position ):
                 msg = "Current position {} deg. Setpoint exceeded by {} deg"
                 break
-            if( degrees == position ):
+            if( abs(degrees - position) <= 1/(2 * self.settings.steps_per_degree[channel]):
                 msg = "New motor position is {} deg, error {} deg."
                 break
         
