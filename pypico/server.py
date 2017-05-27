@@ -1,6 +1,7 @@
 import zmq
 import time
 import logging
+import sys
 
 from motorControl import MotorControl
 from cmdparse import SCPIParser
@@ -27,23 +28,35 @@ ch.setFormatter(cformatter)
 logger.addHandler(fh)
 logger.addHandler(ch)
 
-# setup motor controller
-mc = MotorControl(pypico_settings, logger)
+test = False
+if len(sys.argv) > 1:
+    if sys.argv[1] == 'test':
+        import fakeMotorControl
+        test = True
+        logger.info('Using test motor controller')
+        mc = fakeMotorControl.MotorControl(pypico_settings, logger)
+
+if not test:
+    # setup motor controller
+    mc = MotorControl(pypico_settings, logger)
+
 p = SCPIParser(mc)
 
 # setup zmq
 context = zmq.Context()
 socket = context.socket(zmq.REP)
-socket.bind("tcp://*:%s" % port)
+addr = "tcp://*:{}".format(port)
+socket.bind(addr)
+logger.info('Server listening at: {}'.format(addr))
 
 try:
     while True:
         #  Wait for next request from client
         message = socket.recv()
-        print "Received request: ", message
+        logger.info("Received request: %s", message)
         #time.sleep(1)
         return_msg = p.parsecmd(message)
-        print(return_msg)
+        logger.info("Returning msg: %s", return_msg)
         socket.send(return_msg)
 except KeyboardInterrupt:
     pass

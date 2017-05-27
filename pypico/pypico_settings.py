@@ -19,7 +19,7 @@ zeno_factor = [0.7,0.7]
 overshoot = [1000,1000]
 
 # max angle errors (degrees) without throwing an error
-# for us 1 degree ~ 11 deg/um -> 0.1 deg / 11 deg/um = 10 nm 
+# for us 1 degree ~ 11 deg/um -> 0.1 deg / 11 deg/um = 10 nm
 max_angle_errors = [0.1,0.1]
 
 ## ENCODERD file locations
@@ -27,9 +27,13 @@ encoderd_settings_path = '/home/pi/encoderd/'
 encoderd_settings_file = 'encoderd_settings'
 print encoderd_settings_file
 
-f, filename, desc = imp.find_module(encoderd_settings_file, [encoderd_settings_path])
-encoderd_settings = imp.load_module(encoderd_settings_file, f, filename, desc)
-encoderd_refresh_rate = encoderd_settings.REFRESH_RATE
+try:
+    f, filename, desc = imp.find_module(encoderd_settings_file, [encoderd_settings_path])
+    encoderd_settings = imp.load_module(encoderd_settings_file, f, filename, desc)
+    encoderd_refresh_rate = encoderd_settings.REFRESH_RATE
+except ImportError:
+    print "no encoder daemon found"
+    encoderd_running = False
 
 encoderd_log_path = '/home/pi/.encoderd/'
 encoderd_pidfile = os.path.join(encoderd_log_path,'encoderd.pid')
