@@ -97,6 +97,11 @@ class MotorControl():
         zf = self.settings.zeno_factor[channel]
         # get approximate steps
         position = self.getPosition(channel)
+
+        if( abs(position-degrees)<=self.settings.max_angle_errors[channel] ):
+            self.logger.info('Already within acceptable angle error, not moving')
+            return 0
+
         avg_steps = self.settings.steps_per_degree[channel]*(degrees - position)
         # we should arrive with positive stepping
         # turning the screw forward to minimize hysteresis
