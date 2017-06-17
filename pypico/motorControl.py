@@ -1,6 +1,5 @@
 import logging
 from np8742_tcp_comm import NP8742_TCP
-from util import pid_exists
 import time
 
 """ High-level motor controller class"""
@@ -10,17 +9,18 @@ class MotorControl():
         self.settings = settings
         self.logger = logger
 
-        # start encoderd if not already started, get number of motors
-        if settings.encoderd_running:
-          self.state = 'READY'
-        else:
-          self.state = 'NOT READY'
+        # TODO check status of arduino communication
+        self.state = 'READY'
+        # self.state = 'NOT READY' if failed
 
         # open connection to driver
         self.driver = NP8742_TCP(settings.host, settings.port, settings.timeout, settings.softStart, logger)
 
         self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
         self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
+
+        self.decoder_comm = ArduinoComm('COM10', record=True)
+        self.decoder_comm.START()
 
 	self.positions = [0]*settings.motor_count
 
@@ -33,19 +33,11 @@ class MotorControl():
     """ Read current position from encoderd log file.
         IOError on failure to read file """
     def getPosition(self, channel):
-        if not pid_exists(self.settings.encoderd_pid):
-            self.state = 'NOT READY'
-        else:
-            self.state = 'READY'
-
-        # wait until the daemon would have written the new value to the file
-        time.sleep(self.settings.encoderd_refresh_rate)
         try:
-            pf = file(self.settings.motor_angle_files[channel],'r')
-            pos = float(pf.read().strip())
-            pf.close()
+            pos = self.decoder_comm.READ(channel)
             self.positions[channel] = pos
-        except IOError:
+        except:
+            self.logger.exception("There was an issue with the arduino comm.")
             self.state = 'NOT READY'
 
         return pos
@@ -64,9 +56,9 @@ class MotorControl():
           raise KeyError
 
     """ block execution until a certain command finishes execution.
-        Typical use: 
+        Typical use:
             cmdID = self.driver.queueCommand([command])[1]
-            self.waitForCmd(cmdID)    
+            self.waitForCmd(cmdID)
         """
     def waitForCmd(self, cmdID):
         last_cid = -1
@@ -113,11 +105,11 @@ class MotorControl():
         # the larger the spread in steps the smaller the ratio should be
         # a small spread should approach 1.0
         # typical is 0.8-0.9
-        zf = self.settings.zeno_factor[channel] 
+        zf = self.settings.zeno_factor[channel]
         # get approximate steps
         position = self.getPosition(channel)
         avg_steps = self.settings.steps_per_degree[channel]*(position - degrees)
-        # we should arrive with positive stepping 
+        # we should arrive with positive stepping
         # turning the screw forward to minimize hysteresis
         if avg_steps < 0:
 	    steps = int(round(avg_steps - self.settings.overshoot[channel]))
@@ -148,10 +140,10 @@ class MotorControl():
             if( degrees > position ):
                 msg = "Current position {} deg. Setpoint exceeded by {} deg"
                 break
-            if( abs(degrees - position) <= 1/(2 * self.settings.steps_per_degree[channel]):
+            if( abs(degrees - position) <= 1/(2 * self.settings.steps_per_degree[channel]) ):
                 msg = "New motor position is {} deg, error {} deg."
                 break
-        
+
         if( abs(position-degrees)<=self.settings.max_angle_errors[channel] ):
             if msg=='':
                 msg = "Current position {} deg. Setpoint not achieved by {} deg after max iterations."

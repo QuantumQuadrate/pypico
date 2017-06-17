@@ -2,7 +2,7 @@ import zmq
 import sys
 import argparse
 
-motorLimit = 2
+motorLimit = 4
 
 #===================================================
 
@@ -63,7 +63,7 @@ def moveToAbs(m, pos, unit):
 
 #===================================================
 
-ip="169.254.5.101"
+ip="192.168.1.110"
 port = 5000
 errorStr = "Error : "
 
