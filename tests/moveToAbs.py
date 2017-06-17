@@ -13,6 +13,8 @@ parser.add_argument('-d','--deg', type=float, default=None,
                    help='specify the target position in degrees')
 parser.add_argument('-s','--step', type=float, default=None,
                    help='specify the target position in steps')
+parser.add_argument('-t','--test', default=False, action='store_true',
+                  help='use localhost for testing')
 
 args = parser.parse_args()
 
@@ -63,7 +65,11 @@ def moveToAbs(m, pos, unit):
 
 #===================================================
 
-ip="192.168.1.110"
+if args.test:
+    print "running in test mode, connecting to localhost."
+    ip="127.0.0.1"
+else:
+    ip="192.168.1.110"
 port = 5000
 errorStr = "Error : "
 

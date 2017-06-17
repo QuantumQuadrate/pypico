@@ -1,6 +1,12 @@
+'''fakeMotorControl.py emulates the basic behavior of the motor controller for
+testing.
+
+TODO: change this to inherit from main motor controller
+'''
+
 import logging
-from np8742_tcp_comm import NP8742_TCP
 import time
+import numpy as np
 
 """ High-level motor controller class"""
 class MotorControl():
@@ -8,24 +14,13 @@ class MotorControl():
     def __init__(self, settings, logger):
         self.settings = settings
         self.logger = logger
-
-        # TODO check status of arduino communication
         self.state = 'READY'
-        # self.state = 'NOT READY' if failed
-
-        # open connection to driver
-        self.driver = NP8742_TCP(settings.host, settings.port, settings.timeout, settings.softStart, logger)
-
         self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
         self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
-
-        self.decoder_comm = ArduinoComm('COM10', record=True)
-        self.decoder_comm.START()
-
-	self.positions = [0]*settings.motor_count
+        self.positions =  [0]*settings.motor_count
 
     def close(self):
-        self.driver.gentle_close()
+        self.logger.info("Close of fake controller requested.")
 
     #===========================================================================
     #===================== HELPER COMMANDS =====================================
@@ -33,14 +28,10 @@ class MotorControl():
     """ Read current position from encoderd log file.
         IOError on failure to read file """
     def getPosition(self, channel):
-        try:
-            pos = self.decoder_comm.READ(channel)
-            self.positions[channel] = pos
-        except:
-            self.logger.exception("There was an issue with the arduino comm.")
-            self.state = 'NOT READY'
-
-        return pos
+        self.state = 'READY'
+        # wait for some time for science
+        time.sleep(0.1)
+        return self.positions[channel] # its a number
 
     """ Converts numeric in [units] to degrees
         Raises KeyError if units are incorrect.
@@ -58,17 +49,11 @@ class MotorControl():
     """ block execution until a certain command finishes execution.
         Typical use:
             cmdID = self.driver.queueCommand([command])[1]
-            self.waitForCmd(cmdID)
+            waitForCmd(cmdID)
         """
     def waitForCmd(self, cmdID):
-        last_cid = -1
-        #print "block until cmd: {}".format(cmdID)
-        while not self.driver.cmdFinishedQ(cmdID):
-            cid = self.driver.currentCmdID()
-            if cid != last_cid:
-              self.logger.debug("current cmd: {}, waiting for: {}".format(cid,cmdID))
-              last_cid = cid
-            time.sleep(0.1) # not having print statement seems to break the loop for some reason
+        # just wait for some time
+        time.sleep(2)
 
     """ Put code here to be called after a new motor position is achieved
         """
@@ -78,9 +63,10 @@ class MotorControl():
     #===========================================================================
     #===================== MOVEMENT COMMANDS ===================================
     #===========================================================================
-    """ Move motor to the position in degrees relative to the current position"""
+    """ Move motor to the position in degrees relative to the current position
+    """
     def move_rel(self, channel, degrees):
-        abs_deg = self.getPosition() + degrees
+        abs_deg = self.getPosition(channel) + degrees
         return self.move_abs(channel, abs_deg)
 
     """ Move motor to the position in [units] relative to the current position.
@@ -89,9 +75,12 @@ class MotorControl():
         # check channel range
         if channel < self.settings.motor_count:
             if self.state == 'READY':
-                motor = channel + 1 # motors start at 1 on controller
-                cmdID = self.driver.queueCommand("{}PR{}".format(motor,steps))[1]
-                self.waitForCmd(cmdID)
+                self.logger.info("Not sending command: {}PR{}".format(channel,steps))
+                self.waitForCmd(1)
+                # fake some movement with some error
+                deg_target = steps/self.settings.steps_per_degree[channel]
+                self.positions[channel] += deg_target*(1 + 0.1*np.random.randn(1)[0]) # 10% error
+                self.logger.info("Changing position randomly to: {} DEG".format(self.positions[channel]))
                 return 0
             else:
                 return -1
@@ -108,53 +97,44 @@ class MotorControl():
         zf = self.settings.zeno_factor[channel]
         # get approximate steps
         position = self.getPosition(channel)
-        # dont move if we are close enough
+
         if( abs(position-degrees)<=self.settings.max_angle_errors[channel] ):
-            self.logger.debug('Already within acceptable angle error, not moving')
+            self.logger.info('Already within acceptable angle error, not moving')
             return 0
 
-        avg_steps = self.settings.steps_per_degree[channel]*(position - degrees)
+        avg_steps = self.settings.steps_per_degree[channel]*(degrees - position)
         # we should arrive with positive stepping
         # turning the screw forward to minimize hysteresis
         if avg_steps < 0:
-	    steps = int(round(avg_steps - self.settings.overshoot[channel]))
-            status_msg = "Need to go negative. Current position {}DEG. Setpoint {}DEG. Steps to be taken: {}"
-            self.logger.info(status_msg.format(position, degrees, steps))
-	    try:
-                ret = self.move_rel_steps(channel, steps)
-	    except IndexError:
-		print "motor is registered"
-
+            ret = self.move_rel_steps(channel, avg_steps - self.settings.overshoot[channel])
             if ret < 0: # if encoderd is not running dont allow motor movement
                 return ret
 
-        # now move forward
-        msg = ''
         position = self.getPosition(channel)
+        msg = ''
+        # now move forward
         for i in range(self.settings.max_iterations):
-            steps = zf*self.settings.steps_per_degree[channel]*( position - degrees )
+            steps = zf*self.settings.steps_per_degree[channel]*(degrees - position)
             steps = int(round(steps))
-            if( steps == 0 ):
+            if(steps == 0):
                 steps = 1
-            status_msg = "Current position {}DEG. Setpoint {}DEG. Steps to be taken: {}"
-            self.logger.debug(status_msg.format(position, degrees, steps))
             ret = self.move_rel_steps(channel, steps)
             if ret < 0:
                 return ret
             position = self.getPosition(channel)
-            if( degrees > position ):
+            if( degrees < position ):
                 msg = "Current position {} deg. Setpoint exceeded by {} deg"
                 break
-            if( abs(degrees - position) <= 1/(2 * self.settings.steps_per_degree[channel])):
+            if( abs(degrees - position) <= 1/(2 * self.settings.steps_per_degree[channel] )):
                 msg = "New motor position is {} deg, error {} deg."
                 break
 
         if( abs(position-degrees)>=self.settings.max_angle_errors[channel] ):
-            if msg=='':
+            if not msg:
                 msg = "Current position {} deg. Setpoint not achieved by {} deg after max iterations."
-            self.logger.info(msg.format(position, position-degrees))
-        else:
             self.logger.error(msg.format(position, position-degrees))
+        else:
+            self.logger.info(msg.format(position, position-degrees))
 
         self.newPositionEvent(channel, position)
         return 0
