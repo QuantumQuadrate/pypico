@@ -69,7 +69,7 @@ if args.test:
     print "running in test mode, connecting to localhost."
     ip="127.0.0.1"
 else:
-    ip="192.168.1.110"
+    ip="127.0.0.1"
 port = 5000
 errorStr = "Error : "
 

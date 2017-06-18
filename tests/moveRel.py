@@ -12,7 +12,7 @@ errorStr = "Error : "
 # test read commands
 print "STARTING READ POSITION CMD TEST"
 test_request = "READ:MOT"
-i=0
+i=2
 noError = True
 while noError:
   socket.send(test_request+str(i))
@@ -27,8 +27,8 @@ while noError:
 # test write commands
 print "STARTING RELATIVE MOVEMENT CMD TEST"
 test_request = "MOVE:REL:MOT"
-i=0
-movement = ' '+str(-50)+'DEG'
+i=3
+movement = ' '+str(100)+'STEP'
 print "Attempting REL movement to:{}".format(movement)
 socket.send(test_request+str(i)+movement)
 message = socket.recv()
@@ -36,3 +36,18 @@ if message[:len(errorStr)] == errorStr:
   print "Received error: [{}]".format( message )
 else:
   print "Received reply: [{}]".format( message )
+
+# test read commands
+print "STARTING READ POSITION CMD TEST"
+test_request = "READ:MOT"
+i=2
+noError = True
+while noError:
+  socket.send(test_request+str(i))
+  message = socket.recv()
+  if message[:len(errorStr)] == errorStr:
+    noError = False
+    print "Received error: [{}]".format( message )
+  else:
+    print "Received reply: [{}]".format( message )
+  i+=1

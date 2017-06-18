@@ -1,4 +1,5 @@
 import serial
+import time
 
 class ArduinoComm(object):
 
@@ -9,11 +10,11 @@ class ArduinoComm(object):
 		self.baudrate = 115200
 		self.port = port # 'COM10'
 		self.timeout = 1
-		ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
+		self.ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
 
 	def START(self):
 		try:
-			print ser.readline()
+			print "Arduino: {}".format(self.ser.readline())
 			#TODO: Check for START in buffer
 			return 0
 
@@ -24,7 +25,8 @@ class ArduinoComm(object):
 	def READ(self, motor):
 		try:
 			#serial write to the arduino
-			ser.write(chr(2)) # read command
+			time.sleep(0.1)
+			self.ser.write(chr(2)) # read command
 			n = None
 			if motor >= self.channels:
 				#TODO: need a break here
@@ -32,16 +34,16 @@ class ArduinoComm(object):
 				print msg.format(self.channels-1, motor)
 				raise KeyError
 
-			ser.write(chr(channel)) # read channel position
+			self.ser.write(chr(motor)) # read channel position
 			#Read the newest output from the Arduino
-			n = ser.readline() #TODO newline
+			n = self.ser.readline() #TODO newline
 			if n:
 				# TODO: implement ASCII
 				m = int(n,16)
 				if m > 0x7FFFFFFF:
 					m -= 0x100000000
 				if self.record:
-					with open(self.files[channel], 'w') as f:
+					with open(self.files[motor], 'w') as f:
 						f.write(str(m))
 				return m
 			else:
@@ -50,12 +52,13 @@ class ArduinoComm(object):
 		except serial.serialutil.SerialException:
 			#TODO: Stuff.
 			print "There was a serial/usb error"
+			raise IOError
 
 	def STATUS(self):
 		try:
 			#get the serial number from the EEPROM of the arduino
-			ser.write(chr(3))
-			n = ser.readline()
+			self.ser.write(chr(3))
+			n = self.ser.readline()
 			return n
 		except serial.serialutil.SerialException:
 			print "There was a serial/usb error"

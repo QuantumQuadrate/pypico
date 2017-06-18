@@ -4,16 +4,17 @@ class SCPIParser():
     self.errormsg = 'Command "{}" is not defined. \nSelect from [{}]'
     self.errormsg_numeric = 'Cound not parse numeric input: "{}"'
     self.errormsg_oor = 'Motor {} is not registered in pypico_settings file.'
+    self.errormsg_comm = 'Motor {} had a communication issue.'
     self.errormsg_units = 'Unit {} is not recognized. \nSelect from [{}].'
     self.motor_driver = motor_driver
-  
+
   def Error(self, string):
     return ("Error : " + string)
-  
+
   # Might format return string in later versions
   def return_string(self, string):
     return string
-  
+
   # splits a string with number and unit into float and string tuple
   def parse_numeric(self, arg):
     # search for first non-numeric charater (after whitespace)
@@ -24,7 +25,7 @@ class SCPIParser():
         break
       i+=1
     return (float(s[:i]),s[i:])
-  
+
   # splits off current command level, then follows command switch to next level
   def nextCMD(self, current_cmd, cmd_switch, args ):
     try:
@@ -36,17 +37,17 @@ class SCPIParser():
       rest = ''
       if len(splt) == 2:
         rest = splt[1]
-      
+
     # if the command is invalid, return a list of valid commands
     if cmd not in cmd_switch:
       cmds = []
       for key in cmd_switch:
           cmds.append(':'.join([current_cmd,str(key)]))
       return self.Error(self.errormsg.format(cmd, ','.join(cmds)))
-  
+
     # if the command is valid, continue to the next level
     return cmd_switch[cmd](rest)
-  
+
   ################################################################################
   ### START
   ################################################################################
@@ -64,7 +65,7 @@ class SCPIParser():
     }
     #Check if command exists
     return self.nextCMD('', cmd_switch, args)
-  
+
   ################################################################################
   ### START - READ
   ################################################################################
@@ -78,27 +79,29 @@ class SCPIParser():
     }
     #Check if command exists
     return self.nextCMD('READ', cmd_switch, args)
-  
+
   def read_mot_0(self, args):
     return self.read_mot(0,args)
-  
+
   def read_mot_1(self, args):
     return self.read_mot(1,args)
-  
+
   def read_mot_2(self, args):
     return self.read_mot(2,args)
-  
+
   def read_mot_3(self, args):
     return self.read_mot(3,args)
-  
+
   #Wrapper around motor driver library####################
   def read_mot(self, chan, args):
     try:
       degrees = self.motor_driver.getPosition(chan)
     except IndexError:
       return self.Error(self.errormsg_oor.format(chan))
+    except IOError:
+      return self.Error(self.errormsg_comm.format(chan))
     return self.return_string(str(degrees))
-  
+
   ################################################################################
   ### START - MOVE
   ################################################################################
@@ -109,7 +112,7 @@ class SCPIParser():
       'ABS': self.abs_move,
     }
     return self.nextCMD('MOVE', cmd_switch, args)
-  
+
   ################################################################################
   ### START - MOVE - RELATIVE MOVE
   ################################################################################
@@ -122,19 +125,19 @@ class SCPIParser():
       'MOT3' : self.rel_mv_3,
     }
     return self.nextCMD('REL', cmd_switch, args)
-  
+
   def rel_mv_0(self,args):
     return self.rel_mv(0,args)
-  
+
   def rel_mv_1(self,args):
     return self.rel_mv(1,args)
-  
+
   def rel_mv_2(self,args):
     return self.rel_mv(2,args)
-  
+
   def rel_mv_3(self,args):
     return self.rel_mv(3,args)
-  
+
   #Wrapper around motor driver library####################
   def rel_mv(self, chan, args):
     # parse movement numbers
@@ -142,7 +145,7 @@ class SCPIParser():
       (number, unit) = self.parse_numeric(args)
     except ValueError:
       return self.Error(self.errormsg_numeric.format(args))
-      
+
     try:
         if unit.upper() == "STEP":
             self.motor_driver.move_rel_steps(chan,number)
@@ -154,10 +157,10 @@ class SCPIParser():
         return self.Error(self.errormsg_oor.format(chan))
     except ValueError:
         return self.Error(self.errormsg_units.format(unit.upper(), "DEG,STEP"))
-        
+
 
     return self.return_string(' '.join([str(number),unit]))
-  
+
   ################################################################################
   ### START - MOVE - ABSOLUTE MOVE
   ################################################################################
@@ -170,19 +173,19 @@ class SCPIParser():
       'MOT3' : self.abs_mv_3,
     }
     return self.nextCMD('ABS', cmd_switch, args)
-  
+
   def abs_mv_0(self, args):
     return self.abs_mv(0,args)
-  
+
   def abs_mv_1(self, args):
     return self.abs_mv(1,args)
-  
+
   def abs_mv_2(self, args):
     return self.abs_mv(2,args)
-  
+
   def abs_mv_3(self, args):
     return self.abs_mv(3,args)
-  
+
   #Wrapper around motor driver library####################
   def abs_mv(self, chan, args):
     # parse movement numbers
@@ -190,7 +193,7 @@ class SCPIParser():
       (number, unit) = self.parse_numeric(args)
     except ValueError:
       return self.Error(self.errormsg_numeric.format(args))
-      
+
     try:
         if (unit.upper() == "DEG") or (unit == ''):
             self.motor_driver.move_abs(chan,number)
@@ -200,5 +203,5 @@ class SCPIParser():
         return self.Error(self.errormsg_oor.format(chan))
     except ValueError:
         return self.Error(self.errormsg_units.format(unit.upper(), "DEG"))
-        
+
     return self.return_string(' '.join([str(number),unit]))
