@@ -62,3 +62,12 @@ class ArduinoComm(object):
 			return n
 		except serial.serialutil.SerialException:
 			print "There was a serial/usb error"
+
+	def RESET(self):
+                try:
+                        self.ser.write(chr(4))
+                        n = self.ser.readline()
+                        return n
+                except serial.serialutil.SerialException:
+                        print "There was a serial/usb error"
+			
