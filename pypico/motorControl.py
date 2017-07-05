@@ -20,8 +20,8 @@ class MotorControl():
 		self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
 		self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
 
-		self.decoder_comm = ArduinoComm('COM10', record=True)
-		#self.decoder_comm.START()
+                self.decoder_comm780 = ArduinoComm(settings.port[1], record=True)
+                self.docoder_comm480 = ArduinoComm(settings.port[0], record=True)
 
 		self.positions = [0]*settings.motor_count
 
@@ -36,9 +36,12 @@ class MotorControl():
 	def getPosition(self, channel):
 		try:
 			## TODO:REMOVE THIS BEFORE FINAL (make a routing dictionary)
-			pos = self.decoder_comm.READ(channel-2) # position in counts
-			pos = pos*self.settings.encoders[channel]['calibration']
-			self.positions[channel] = pos
+                        if channel > 1:
+                                pos = self.decoder_comm480.READ(channel-2) # position in counts
+                        if channel <= 1:
+                                pos = self.decoder_comm780.READ(channel-2) # position in counts
+                        pos = pos*self.settings.encoders[channel]['calibration']
+                        self.positions[channel] = pos
 		except ValueError:
 			raise IOError
 		except:
