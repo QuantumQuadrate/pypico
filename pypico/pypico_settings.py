@@ -19,6 +19,9 @@ overshoot = [1000, 1000, 1000, 1000]
 # for us 1 degree ~ 11 deg/um -> 0.1 deg / 11 deg/um = 10 nm
 max_angle_errors = [0.1, 0.1, 0.1, 0.1]
 
+#serial ports
+port = ['COM10', 'COM11']
+
 # list of attached encoders
 encoders=[
     dict(
