@@ -1,4 +1,4 @@
-host = '192.168.1.122'
+host = '192.168.1.121'
 port = 23 # telnet port (do not change)
 
 motor_count = 4 # number of motors
@@ -20,7 +20,7 @@ overshoot = [1000, 1000, 1000, 1000]
 max_angle_errors = [0.1, 0.1, 0.1, 0.1]
 
 #serial ports
-port = ['COM10', 'COM11']
+usbport = ['COM10', 'COM11']
 
 # list of attached encoders
 encoders=[
