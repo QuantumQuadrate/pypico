@@ -21,7 +21,7 @@ class MotorControl():
 		self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
 
 		self.decoder_comm = ArduinoComm('COM10', record=True)
-		self.decoder_comm.START()
+		#self.decoder_comm.START()
 
 		self.positions = [0]*settings.motor_count
 
