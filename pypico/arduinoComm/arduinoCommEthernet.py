@@ -4,8 +4,8 @@ import time
 
 class ArduinoComm(object):
 
-    def __init__(self, IpAdress):
-        self.record = False #get rid of false later
+    def __init__(self, IpAdress, record):
+        self.record = record
         self.TCP_IP = IpAdress
         self.TCP_PORT = 1000
         self.BUFFER_SIZE = 1024
@@ -14,8 +14,8 @@ class ArduinoComm(object):
         self.connection = self.s.connect((self.TCP_IP, self.TCP_PORT))
         self.s.settimeout(1)
         self.channels = 2
-        #self.START()
-
+        
+    #prints "start" and verifies communication with the arduino
     def START(self):
         time.sleep(0.1)
         n = None
@@ -28,11 +28,18 @@ class ArduinoComm(object):
                     print "Arduino: {}".format(n)
             except socket.timeout:
                 socketERR = socketERR + 1
-                time.sleep(0.25)
+                time.sleep(0.1)
                 if socketERR == 20:
                     print "socket timeout"
                     raise IOError
-
+            except socket.error:
+                print "Detected remote disconnect"
+                time.sleep(1)
+                self.s.close()
+                self.reconnect()
+                pass
+            
+    #asks for and returns the serial number of the arduino
     def STATUS(self):
         time.sleep(0.1)
         n = None
@@ -46,12 +53,18 @@ class ArduinoComm(object):
                     return n
             except socket.timeout:
                 socketERR = socketERR + 1
-                time.sleep(0.25)
+                time.sleep(0.1)
                 if socketERR == 20:
                     print "socket timeout"
                     raise IOError
+            except socket.error:
+                print "Detected remote disconnect"
+                time.sleep(1)
+                self.s.close()
+                self.reconnect()
+                pass
 
-
+#reads the postion of the encoder from the arduino and returns it
     def READ(self, motor):
         time.sleep(0.1)
         n = None
@@ -72,14 +85,20 @@ class ArduinoComm(object):
                         with open(self.files[motor], 'w') as f:
                             f.write(str(m))
                     return n
-
             except socket.timeout:
                 socketERR = socketERR + 1
-                time.sleep(0.25)
+                time.sleep(0.1)
                 if socketERR == 20:
                     print "socket timeout"
                     raise IOError
+            except socket.error:
+                print "Detected remote disconnect"
+                time.sleep(1)
+                self.s.close()
+                self.reconnect()
+                pass                    
 
+    #resets the encoder postion to 0        
     def RESET(self):
         time.sleep(0.1)
         n = None
@@ -96,3 +115,15 @@ class ArduinoComm(object):
                 if socketERR == 20:
                     print "socket timeout"
                     raise IOError
+            except socket.error:
+                print "Detected remote disconnect"
+                time.sleep(1)
+                self.s.close()
+                self.reconnect()
+                pass
+
+    #if the socket connection is broken (in case of a socket errror) re-opens the socket
+    def reconnect(self):
+        self.s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.connection = self.s.connect((self.TCP_IP, self.TCP_PORT))
+        self.s.settimeout(1)            
