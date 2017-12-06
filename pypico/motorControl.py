@@ -20,8 +20,8 @@ class MotorControl():
 		self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
 		self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
 
-		self.decoder_comm780 = ArduinoComm(settings.usbport[1], record=True)
-		self.decoder_comm480 = ArduinoComm(settings.usbport[0], record=True)
+		self.decoder_comm780 = ArduinoComm(settings.usbport[0], record=True)
+		self.decoder_comm480 = ArduinoComm(settings.usbport[1], record=True)
 
 
 		self.positions = [0]*settings.motor_count
@@ -47,6 +47,7 @@ class MotorControl():
 				pos = self.decoder_comm780.READ(channel) # position in counts
 			pos = pos*self.settings.encoders[channel]['calibration']
 			self.positions[channel] = pos
+			self.logger.info('Channel: {} position: {}'.format(channel, pos))
 		except ValueError:
 			raise IOError
 		except:

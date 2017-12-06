@@ -49,8 +49,9 @@ addr = "tcp://*:{}".format(port)
 socket.bind(addr)
 logger.info('Server listening at: {}'.format(addr))
 
-try:
-    while True:
+should_continue=True
+while should_continue:
+    try:
         #  Wait for next request from client
         message = socket.recv()
         logger.info("Received request: %s", message)
@@ -58,8 +59,8 @@ try:
         return_msg = p.parsecmd(message)
         logger.info("Returning msg: %s", return_msg)
         socket.send(return_msg)
-except KeyboardInterrupt:
-    pass
+    except KeyboardInterrupt:
+        pass
 
 socket.close()
 context.destroy()
