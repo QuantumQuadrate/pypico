@@ -105,6 +105,12 @@ class MotorControl():
 		if channel < self.settings.motor_count:
 			if self.state == 'READY':
 				motor = channel + 1 # motors start at 1 on controller
+				# limit the maximum motion. Right now I'm going to hardcode it.
+				max_steps=5000
+				if steps>=max_steps:
+					steps=max_steps
+				elif steps<=-max_steps:
+					steps=-max_steps
 				cmdID = self.driver.queueCommand("{}PR{}".format(motor,steps))[1]
 				self.waitForCmd(cmdID)
 				return 0
