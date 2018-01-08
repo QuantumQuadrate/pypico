@@ -6,7 +6,7 @@ from arduinoComm.arduinoComm import ArduinoComm
 """ High-level motor controller class"""
 class MotorControl():
     """ Class initialization """
-    def __init__(self, settings, logger):
+    def __init__(self, settings, logger, persist=True):
         self.settings = settings
         self.logger = logger
 
@@ -20,8 +20,8 @@ class MotorControl():
         self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
         self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
 
-        self.decoder_comm780 = ArduinoComm(settings.usbport[0], record=True)
-        self.decoder_comm480 = ArduinoComm(settings.usbport[1], record=True)
+        self.decoder_comm780 = ArduinoComm(settings.usbport[0], record=True, persist=persist)
+        self.decoder_comm480 = ArduinoComm(settings.usbport[1], record=True, persist=persist)
 
 
         self.positions = [0]*settings.motor_count

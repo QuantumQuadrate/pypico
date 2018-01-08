@@ -20,28 +20,30 @@ overshoot = [1000, 1000, 1000, 1000]
 max_angle_errors = [0.1, 0.1, 0.1, 0.1]
 
 #serial ports
-usbport = ['COM10', 'COM11']
+usbport = ['COM8', 'COM10']
 
 # list of attached encoders
 encoders=[
     dict(
         name="780X",                # device nickname
-        calibration=360/(2048*4.0), # degrees/step, HEDR-55L2-BH07
-		port='COM10'
+        #calibration=360/(2048*1.0), # degrees/step, HEDR-55L2-BH07
+        calibration=1, # degrees/step, HEDR-55L2-BH07
+		port='COM11'
     ),
     dict(
         name="780Y",                # device nickname
-        calibration=360/(2048*4.0), # degrees/step, HEDR-55L2-BH07
-		port='COM10'
+        calibration=1,
+        #calibration=360/(2048*4.0), # degrees/step, HEDR-55L2-BH07
+		port='COM11'
     ),
     dict(
         name="480X",                # device nickname
         calibration=360/(2048*4.0), # degrees/step, HEDR-55L2-BH07
-		port='COM11'
+		port='COM10'
     ),
     dict(
         name="480Y",                # device nickname
         calibration=360/(2048*4.0), # degrees/step, HEDR-55L2-BH07
-		port='COM11'
+		port='COM10'
     ),
 ]
