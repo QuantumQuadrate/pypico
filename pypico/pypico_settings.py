@@ -28,13 +28,13 @@ encoders=[
         name="780X",                # device nickname
         #calibration=360/(2048*1.0), # degrees/step, HEDR-55L2-BH07
         calibration=1, # degrees/step, HEDR-55L2-BH07
-		port='COM11'
+		port='COM8'
     ),
     dict(
         name="780Y",                # device nickname
         calibration=1,
         #calibration=360/(2048*4.0), # degrees/step, HEDR-55L2-BH07
-		port='COM11'
+		port='COM8'
     ),
     dict(
         name="480X",                # device nickname

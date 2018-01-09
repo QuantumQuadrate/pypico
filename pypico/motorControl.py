@@ -45,6 +45,7 @@ class MotorControl():
                 print("780")
                 print(channel)
                 pos = self.decoder_comm780.READ(channel) # position in counts
+                print("pos:{}".format(pos))
             pos = pos*self.settings.encoders[channel]['calibration']
             self.positions[channel] = pos
             self.logger.info('Channel: {} position: {}'.format(channel, pos))

@@ -30,8 +30,8 @@ class ArduinoComm(object):
 	def READ(self, motor):
 		try:
 			#serial write to the arduino
-			time.sleep(0.1)
-			self.ser.write(chr(2)) # read command
+			#time.sleep(0.1)
+			self.ser.write(chr(2)+chr(motor)) # read command. # no wait between two commands
 			n = None
 			if motor >= self.channels:
 				#TODO: need a break here
@@ -39,7 +39,7 @@ class ArduinoComm(object):
 				print msg.format(self.channels-1, motor)
 				raise KeyError
 
-			self.ser.write(chr(motor)) # read channel position
+			#self.ser.write(chr(motor)) # read channel position
 			#Read the newest output from the Arduino
 			n = self.ser.readline() #TODO newline
 			if n:
