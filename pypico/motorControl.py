@@ -20,9 +20,8 @@ class MotorControl():
         self.errormsg = 'Command "{}" is not defined. \n select from [{}]'
         self.errormsg_numeric = 'Cound not parse numeric imput: "{}"'
 
-        self.decoder_comm780 = ArduinoComm(settings.usbport[0], record=True, persist=persist)
-        self.decoder_comm480 = ArduinoComm(settings.usbport[1], record=True, persist=persist)
-
+        self.decoder_comm = ArduinoComm(settings.usbport[0], record=True, persist=persist)
+        #self.decoder_comm480 = ArduinoComm(settings.usbport[1], record=True, persist=persist)
 
         self.positions = [0]*settings.motor_count
 
@@ -39,13 +38,11 @@ class MotorControl():
             ## TODO:REMOVE THIS BEFORE FINAL (make a routing dictionary)
             if channel > 1:
                 print("480")
-                print(channel)
-                pos = self.decoder_comm480.READ(channel-2) # position in counts
             if channel <= 1:
                 print("780")
-                print(channel)
-                pos = self.decoder_comm780.READ(channel) # position in counts
-                print("pos:{}".format(pos))
+            print(channel)
+            pos = self.decoder_comm.READ(channel) # position in counts
+            print("pos:{}".format(pos))
             pos = pos*self.settings.encoders[channel]['calibration']
             self.positions[channel] = pos
             self.logger.info('Channel: {} position: {}'.format(channel, pos))

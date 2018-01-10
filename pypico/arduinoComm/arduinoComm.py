@@ -5,8 +5,8 @@ class ArduinoComm(object):
 
 	def __init__(self, port, record=False, persist=True):
 		self.record = record
-		self.files = ['EncoderPositionX.dat', 'EncoderPositionY.dat']
-		self.channels = 2
+		self.files = ['EncoderPosition780X.dat', 'EncoderPosition780Y.dat','EncoderPosition480X.dat','EncoderPosition480Y.dat']
+		self.channels = 4
 		self.baudrate = 115200
 		self.port = port # 'COM10' or 'COM11'?
 		self.timeout = 1
@@ -30,7 +30,6 @@ class ArduinoComm(object):
 	def READ(self, motor):
 		try:
 			#serial write to the arduino
-			#time.sleep(0.1)
 			self.ser.write(chr(2)+chr(motor)) # read command. # no wait between two commands
 			n = None
 			if motor >= self.channels:
@@ -79,7 +78,7 @@ class ArduinoComm(object):
 
 
 	def checkPorts(self):
-		print "hello"
+		print "checkPorts commented out"
 		#There are two ports, we assume COM10 and COM11 for now, and each are matched to an arduino
 		#These arduinos have serial numbers 1 and 2, and these are matched to each port
 		#a change in ports or a failure to match the serial numbers to the ports throws an error
