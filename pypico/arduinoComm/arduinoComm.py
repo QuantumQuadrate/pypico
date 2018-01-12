@@ -13,7 +13,7 @@ class ArduinoComm(object):
 		self.ser = serial.Serial(self.port, self.baudrate, timeout=self.timeout)
 
 		self.START()
-		self.checkPorts()
+		#self.checkPorts()
 		if not persist:
 			self.RESET()
 
