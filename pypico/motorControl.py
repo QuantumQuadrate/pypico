@@ -42,7 +42,7 @@ class MotorControl():
                 print("780")
             print(channel)
             pos = self.decoder_comm.READ(channel) # position in counts
-            print("pos:{}".format(pos))
+            #print("pos:{}".format(pos))
             pos = pos*self.settings.encoders[channel]['calibration']
             self.positions[channel] = pos
             self.logger.info('Channel: {} position: {}'.format(channel, pos))
@@ -104,12 +104,12 @@ class MotorControl():
             if self.state == 'READY':
                 motor = channel + 1 # motors start at 1 on controller
                 # limit the maximum motion. Right now I'm going to hardcode it.
-                max_steps=10000
+                max_steps=40000
                 if steps>=max_steps:
                     steps=max_steps
                 elif steps<=-max_steps:
                     steps=-max_steps
-                print "moving this much:{}".format(steps)
+                #print "moving this much:{}".format(steps)
                 cmdID = self.driver.queueCommand("{}PR{}".format(motor,steps))[1]
                 self.waitForCmd(cmdID)
                 return 0
