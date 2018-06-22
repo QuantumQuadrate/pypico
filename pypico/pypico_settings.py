@@ -10,7 +10,7 @@ softStart = False # softStart will not check the type of motor attached to the c
 # 780 motor calibrations: 2018/01/15
 # 480 motor calibrations: 2017/06/17
 #steps_per_degree = [44.5, 36.6, 36.5, 45.8]
-steps_per_degree = [40.0, 19.0, 36.5, 45.8]
+steps_per_degree = [40.0, 19.0, -36.5, -45.8]
 # set to about 2 std devs
 zeno_factor = [0.7, 0.7, 0.7, 0.7]
 # steps to overshoot setpoint when moving backwards
