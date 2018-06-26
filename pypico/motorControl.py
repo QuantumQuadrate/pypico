@@ -3,6 +3,10 @@ from np8742_tcp_comm import NP8742_TCP
 import time, csv
 from arduinoComm.arduinoComm import ArduinoComm
 
+csvfilename_full='position_full_history.csv'
+csvfilename_final='position_final_history.csv'
+
+
 """ High-level motor controller class"""
 class MotorControl():
     """ Class initialization """
@@ -27,9 +31,6 @@ class MotorControl():
     def close(self):
         self.driver.gentle_close()
 
-
-    csvfilename_full='position_full_history.csv'
-    csvfilename_final='position_final_history.csv'
 
     #===========================================================================
     #===================== HELPER COMMANDS =====================================
@@ -57,16 +58,14 @@ class MotorControl():
             self.state = 'NOT READY'
             raise IOError
         # Store the position into a csv file
-        try:
-            fr=open(csvfilename_full,'ab')
-            writer = csv.writer(fr)
-            l=[None]*5
-            l[0]=time.time()
-            l[channel+1]=pos
-            writer.writerow(l)
-            fr.close()
-        except:
-            pass
+
+        fr=open(csvfilename_full,'ab')
+        writer = csv.writer(fr)
+        l=[None]*5
+        l[0]=time.time()
+        l[channel+1]=pos
+        writer.writerow(l)
+        fr.close()
 
         return pos
 
@@ -101,17 +100,14 @@ class MotorControl():
     """ Put code here to be called after a new motor position is achieved
         """
     def newPositionEvent(self, channel, position):
-        # Store the position into a csv file
-        try:
-            fr=open(csvfilename_final,'ab')
-            writer = csv.writer(fr)
-            l=[None]*5
-            l[0]=time.time()
-            l[channel+1]=pos
-            writer.writerow(l)
-            fr.close()
-        except:
-            pass
+    # Store the position into a csv file
+        fr2=open(csvfilename_final,'ab')
+        writer = csv.writer(fr2)
+        l=[None]*5
+        l[0]=time.time()
+        l[channel+1]=position
+        writer.writerow(l)
+        fr2.close()
 
     #===========================================================================
     #===================== MOVEMENT COMMANDS ===================================
