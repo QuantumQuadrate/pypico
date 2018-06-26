@@ -1,6 +1,6 @@
 import logging
 from np8742_tcp_comm import NP8742_TCP
-import time
+import time, csv
 from arduinoComm.arduinoComm import ArduinoComm
 
 """ High-level motor controller class"""
@@ -24,13 +24,17 @@ class MotorControl():
         #self.decoder_comm480 = ArduinoComm(settings.usbport[1], record=True, persist=persist)
 
         self.positions = [0]*settings.motor_count
-
     def close(self):
         self.driver.gentle_close()
+
+
+    csvfilename_full='position_full_history.csv'
+    csvfilename_final='position_final_history.csv'
 
     #===========================================================================
     #===================== HELPER COMMANDS =====================================
     #===========================================================================
+
     """ Read current position from encoderd log file.
         IOError on failure to read file """
     def getPosition(self, channel):
@@ -52,6 +56,17 @@ class MotorControl():
             self.logger.exception("There was an issue with the arduino comm.")
             self.state = 'NOT READY'
             raise IOError
+        # Store the position into a csv file
+        try:
+            fr=open(csvfilename_full,'ab')
+            writer = csv.writer(fr)
+            l=[None]*5
+            l[0]=time.time()
+            l[channel+1]=pos
+            writer.writerow(l)
+            fr.close()
+        except:
+            pass
 
         return pos
 
@@ -86,7 +101,17 @@ class MotorControl():
     """ Put code here to be called after a new motor position is achieved
         """
     def newPositionEvent(self, channel, position):
-        pass
+        # Store the position into a csv file
+        try:
+            fr=open(csvfilename_final,'ab')
+            writer = csv.writer(fr)
+            l=[None]*5
+            l[0]=time.time()
+            l[channel+1]=pos
+            writer.writerow(l)
+            fr.close()
+        except:
+            pass
 
     #===========================================================================
     #===================== MOVEMENT COMMANDS ===================================

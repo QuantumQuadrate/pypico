@@ -6,7 +6,6 @@ max_iterations = 20 # attempts to hit setpoint
 timeout = 1 # asynchat timeout
 softStart = False # softStart will not check the type of motor attached to the controller
 # checking the type of motor will move it a little bit. If that is not acceptable then set to True
-
 # 780 motor calibrations: 2018/01/15
 # 480 motor calibrations: 2017/06/17
 #steps_per_degree = [44.5, 36.6, 36.5, 45.8]
