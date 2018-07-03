@@ -13,7 +13,7 @@ steps_per_degree = [40.0, 19.0, -36.5, -45.8]
 # set to about 2 std devs
 zeno_factor = [0.7, 0.7, 0.7, 0.7]
 # steps to overshoot setpoint when moving backwards
-overshoot = [1000, 1000, 1000, 1000]
+overshoot = [500, 500, 1000, 1000]
 
 # max angle errors (degrees) without throwing an error
 # for us 1 degree ~ 11 deg/um -> 0.1 deg / 11 deg/um = 10 nm
