@@ -2,7 +2,7 @@ host = '192.168.1.121'
 port = 23 # telnet port (do not change)
 
 motor_count = 4 # number of motors
-max_iterations = 20 # attempts to hit setpoint
+max_iterations = 10 # attempts to hit setpoint
 timeout = 1 # asynchat timeout
 softStart = False # softStart will not check the type of motor attached to the controller
 # checking the type of motor will move it a little bit. If that is not acceptable then set to True

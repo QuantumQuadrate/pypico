@@ -114,7 +114,7 @@ class MotorControl():
     #===========================================================================
     """ Move motor to the position in degrees relative to the current position"""
     def move_rel(self, channel, degrees):
-        abs_deg = self.getPosition() + degrees
+        abs_deg = self.getPosition(channel) + degrees
         return self.move_abs(channel, abs_deg)
 
     """ Move motor to the position in [units] relative to the current position.
@@ -141,23 +141,25 @@ class MotorControl():
 
     """ Move motor to the absolute position in degrees.
         Performs Zeno arrow approach to setpoint"""
-    def movement_settler(self, channel):
-        #defining coupled axes
-        if channel==0:
-            channel_to_move=1
-        elif channel==1:
-            channel_to_move=0
-        elif channel==2:
-            channel_to_move=3
-        elif channel==3:
-            channel_to_move=2
-
-        steps_to_perturb=100
-        try:
-            ret = self.move_rel_steps(channel, steps_to_perturb)
-            ret = self.move_rel_steps(channel, -steps_to_perturb)
-        except IndexError:
-            print "motor is registered"
+    # def movement_settler(self, channel):
+    #     #defining coupled axes
+    #     if channel==0:
+    #         channel_to_move=1
+    #     elif channel==1:
+    #         channel_to_move=0
+    #     elif channel==2:
+    #         channel_to_move=3
+    #     elif channel==3:
+    #         channel_to_move=2
+    #
+    #     deg_to_perturb=1
+    #     position_original = self.getPosition(channel_to_move)
+    #     try:
+    #         ret = self.move_rel_steps(channel_to_move, steps_to_perturb)
+    #     except IndexError:
+    #         print "motor is registered"
+    #     status_msg = "Settler engaged, moving channel :{}".format(channel_to_move)
+    #     print status_msg
 
     def move_abs(self, channel, degrees):
         # ratio of estimated steps to take when approaching setpoint
@@ -188,11 +190,12 @@ class MotorControl():
             if ret < 0: # if encoder is not running dont allow motor movement
                 return ret
 
-            movement_settler(self,channel) # This will move the coupled axis slightly forward-then-backward to escape from stuck.
+            # self.movement_settler(channel) # This will move the coupled axis slightly forward-then-backward to escape from stuck.
 
         # now move forward
         msg = ''
         position = self.getPosition(channel)
+        # settler_kickin_iter=[7,8,9,10]
         for i in range(self.settings.max_iterations):
             steps = zf*self.settings.steps_per_degree[channel]*(degrees-position)
             if( steps < 0 ):
@@ -209,6 +212,8 @@ class MotorControl():
             position = self.getPosition(channel)
             if( abs(degrees - position) <= 1/(2 * self.settings.steps_per_degree[channel])):
                 break
+            # if i in settler_kickin_iter:
+            #     self.movement_settler(channel)
 
         if( abs(position-degrees)>=self.settings.max_angle_errors[channel] ):
             if msg=='':
