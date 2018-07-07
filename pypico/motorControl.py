@@ -141,6 +141,24 @@ class MotorControl():
 
     """ Move motor to the absolute position in degrees.
         Performs Zeno arrow approach to setpoint"""
+    def movement_settler(self, channel):
+        #defining coupled axes
+        if channel==0:
+            channel_to_move=1
+        elif channel==1:
+            channel_to_move=0
+        elif channel==2:
+            channel_to_move=3
+        elif channel==3:
+            channel_to_move=2
+
+        steps_to_perturb=100
+        try:
+            ret = self.move_rel_steps(channel, steps_to_perturb)
+            ret = self.move_rel_steps(channel, -steps_to_perturb)
+        except IndexError:
+            print "motor is registered"
+
     def move_abs(self, channel, degrees):
         # ratio of estimated steps to take when approaching setpoint
         # the larger the spread in steps the smaller the ratio should be
@@ -167,8 +185,10 @@ class MotorControl():
             except IndexError:
                 print "motor is registered"
 
-            if ret < 0: # if encoderd is not running dont allow motor movement
+            if ret < 0: # if encoder is not running dont allow motor movement
                 return ret
+
+            movement_settler(self,channel) # This will move the coupled axis slightly forward-then-backward to escape from stuck.
 
         # now move forward
         msg = ''
